@@ -8,74 +8,171 @@ pequeños proyectos de estudio
     <title>Lista de Tareas</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif; /* Establece la fuente de la página */
+            text-align: center; /* Centra el texto en el cuerpo de la página */
+            color: #d8d4d5;
+            margin: 10px;
+            background-image: url('https://www.solofondos.com/wp-content/uploads/2015/11/new-fondo1lateral-768x576.jpg'); /* Reemplaza 'tu_imagen_de_fondo.jpg' con la ruta de tu imagen */
+            background-color: #e0e0e0;
+            background-size: cover; /* Ajusta el tamaño de la imagen para cubrir todo el fondo */
+        }
+
+        .content-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(252, 248, 248, 0.062); /* Fondo semitransparente */
+        }
+
+        .container {
+            position: relative;
+            z-index: 1; /* Para que el contenido esté sobre el fondo */
         }
         #task-list {
-            list-style-type: none;
+            list-style-type: none; /* Quita las viñetas o números de la lista de tareas */
             padding: 0;
         }
         .task {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 20px solid #ddd;
-            padding: 20px;
-            margin: 5px 0;
+            border: 8px solid #c3d6cb; /* Cambiado a 1px para que no sea tan grueso */
+            padding: 18px; /* Reducido el relleno */
+            margin: 20px 0; /* Reducido el margen */
+            border-radius: 20px;
+            background-color: #dcdada24;
         }
         .task.completed {
             text-decoration: line-through;
-            color: #999;
+            color: #ef265f; /* Cambiado el color de completado */
         }
         button {
-            background-color: blue;
+            background-color: green;
             color: white;
             border: none;
             cursor: pointer;
         }
         .delete-button {
-    background-color: red;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
+            background-color: rgba(255, 0, 0, 0.729);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h1><u>Lista de Tareas</u></h1>
+    <div class="content-overlay"></div> <!-- Capa de fondo semitransparente -->
+    <div class="container">
+
+    <br><h1>Lista de Tareas ID 10151955</h1></br>
     <input type="text" id="task-input" placeholder="Agregar una nueva tarea">
-    <button onclick="addTask()">Agregar</button>
+    <select id="task-priority">
+        <option value="baja">Baja</option>
+        <option value="media">Media</option>
+        <option value="alta">Alta</option>
+    </select>
+    <button type="button" onclick="addTask()">Agregar</button>
     <ul id="task-list"></ul>
 
     <script>
         const taskList = document.getElementById("task-list");
         const taskInput = document.getElementById("task-input");
+        const taskPriority = document.getElementById("task-priority");
 
+        // Función para agregar una tarea
         function addTask() {
             const taskText = taskInput.value.trim();
+            const priority = taskPriority.value;
+
             if (taskText !== "") {
                 const taskItem = document.createElement("li");
                 taskItem.classList.add("task");
                 taskItem.innerHTML = `
-                    <span>${taskText}</span>
+                    <span>${taskText} (Prioridad: ${priority})</span>
                     <button onclick="completeTask(this)">Completar</button>
+                    <button onclick="editTask(this)">Editar</button>
                     <button onclick="deleteTask(this)" class="delete-button">Eliminar</button>
                 `;
                 taskList.appendChild(taskItem);
                 taskInput.value = "";
+
+                // Guardar la tarea en el almacenamiento local
+                saveTask(taskText, priority);
             }
         }
 
+        // Función para marcar una tarea completa
         function completeTask(button) {
             const taskItem = button.parentElement;
             taskItem.classList.toggle("completed");
         }
 
+        // Función para editar una tarea
+        function editTask(button) {
+            const taskItem = button.parentElement;
+            const taskText = taskItem.querySelector("span").textContent;
+            const newTaskText = prompt("Editar tarea:", taskText);
+
+            if (newTaskText !== null) {
+                taskItem.querySelector("span").textContent = newTaskText;
+                // Actualizar la tarea en el almacenamiento local
+                updateTask(taskText, newTaskText);
+            }
+        }
+
+        // Función para eliminar una tarea
         function deleteTask(button) {
             const taskItem = button.parentElement;
+            const taskText = taskItem.querySelector("span").textContent;
             taskList.removeChild(taskItem);
+            // Eliminar la tarea del almacenamiento local
+            removeTask(taskText);
         }
+
+        // Guardar la tarea en el almacenamiento local
+        function saveTask(taskText, priority) {
+            const tasks = JSON.parse(localStorage.getItem("tasks"));
+            tasks.push({ text: taskText, priority: priority });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        // Actualizar la tarea en el almacenamiento local
+        function updateTask(oldTaskText, newTaskText) {
+            const tasks = JSON.parse(localStorage.getItem("tasks"));
+            const taskToUpdate = tasks.find((task) => task.text === oldTaskText);
+            if (taskToUpdate) {
+                taskToUpdate.text = newTaskText;
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+            }
+        }
+
+        // Eliminar la tarea del almacenamiento local
+        function removeTask(taskText) {
+            const tasks = JSON.parse(localStorage.getItem("tasks"));
+            const updatedTasks = tasks.filter((task) => task.text !== taskText);
+            localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+        }
+
+        // Cargar tareas del almacenamiento local al cargar la página
+        window.addEventListener("load", () => {
+            const tasks = JSON.parse(localStorage.getItem("tasks"));
+            tasks.forEach((task) => {
+                const taskItem = document.createElement("li");
+                taskItem.classList.add("task");
+                taskItem.innerHTML = `
+                    <span>${task.text} (Prioridad: ${task.priority})</span>
+                    <button onclick="completeTask(this)">Completar</button>
+                    <button onclick="editTask(this)">Editar</button>
+                    <button onclick="deleteTask(this)" class="delete-button">Eliminar</button>
+                `;
+                taskList.appendChild(taskItem);
+            });
+        });
     </script>
+    </div>
 </body>
 </html>
+
 
